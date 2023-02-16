@@ -34,9 +34,13 @@ OLDEST_MESSAGE_TIMESTAMP="1672560000"
 This script will look for specific emoji reactions on Slack messages to determine what column they are added to:
 
 ✅ to indicate a message that was successfully answered
+
 ⏹ to indicate a message that was abandoned without a resolution
+
 ↪️ to indicate a message that was redirected elsewhere
+
 ❓ to indicate a message with no response
+
 ⛔️ to indicate a message that should not be considered in analytics
 
 ## Running the Script
