@@ -80,6 +80,14 @@ $ FILE_OUTPUT_DIR="/path/to/new/output/" node src/analytics.js
 $ node src/analytics.js --outputDir="/path/to/new/output/"
 ```
 
+To output the CSV to the console:
+
+```bash
+$ FILE_OUTPUT_DIR="" node src/analytics.js
+# or ... 
+$ node src/analytics.js --outputDir=""
+```
+
 To limit the number of messages returned (default is 1000):
 
 ```bash
