@@ -17,6 +17,7 @@ const {
   SLACK_SIGNING_SECRET,
   FILE_OUTPUT_DIR,
   DEBUG,
+  OLDEST_MESSAGE_TIMESTAMP,
   DAYS_TO_STABLE_STATE = 5,
 } = process.env;
 
@@ -31,7 +32,7 @@ const app = new slack.App({
 });
 
 const fileNameBase =
-  new Date().toISOString().split(".")[0].replaceAll(":", "-") + "-GMT-channel-analytics";
+  new Date().toISOString().split(".")[0].replaceAll(":", "-") + "GMT-channel-analytics";
 
 const CUTOFF_SECONDS = parseInt(DAYS_TO_STABLE_STATE, 10) * 24 * 60 * 60;
 const tsCutoff = Math.floor(new Date().getTime() / 1000) - CUTOFF_SECONDS;
@@ -204,7 +205,7 @@ const makeEmptyDay = () => {
         latest: tsCutoff,
 
         // 2022-10-31, first day is cut before CSV is built
-        oldest: 1667199600,
+        oldest: parseInt(OLDEST_MESSAGE_TIMESTAMP, 10),
       });
     }
 
