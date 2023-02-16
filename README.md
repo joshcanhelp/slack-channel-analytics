@@ -4,6 +4,13 @@ This script, given Slackbot credentials and a Slack channel ID, will generate a 
 
 ## Getting Started
 
+Do the dance:
+
+```bash
+$ git clone git@github.com:joshcanhelp/slack-channel-analytics.git
+$ npm install
+```
+
 [Create a new Slack app](https://api.slack.com/apps?new_app=1&ref=bolt_start_hub) with the [required permissions for the conversations.history API endpoint](https://api.slack.com/methods/conversations.history#facts). You will need the **Bot User OAuth Token** under "OAuth and Permissions" and the **Signing Secret** under "Basic Information > App Credentials."
 
 In Slack, find the channel to want to pull analytics for, visit the channel's **About** tab, and copy the **Channel ID** that appears at the bottom.
