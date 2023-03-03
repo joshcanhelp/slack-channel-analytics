@@ -34,9 +34,6 @@ const app = new slack.App({
 const fileNameBase =
   new Date().toISOString().split(".")[0].replaceAll(":", "-") + "GMT-channel-analytics";
 
-const CUTOFF_SECONDS = parseInt(DAYS_TO_STABLE_STATE, 10) * 24 * 60 * 60;
-const tsCutoff = Math.floor(new Date().getTime() / 1000) - CUTOFF_SECONDS;
-
 const excludedUsers = [
   "USLACKBOT", // Slackbot
   "U040ZRHT2KH", // y0da
@@ -202,7 +199,6 @@ const makeEmptyDay = () => {
       slackData = await app.client.conversations.history({
         channel: SLACK_CHANNEL_ID,
         limit: parseInt(limit, 10),
-        latest: tsCutoff,
 
         // 2022-10-31, first day is cut before CSV is built
         oldest: parseInt(OLDEST_MESSAGE_TIMESTAMP, 10),
@@ -305,22 +301,27 @@ const makeEmptyDay = () => {
       }
     }
 
-    const collectedDays = Object.keys(dailyStats);
+    const collectedDays = Object.keys(dailyStats).sort(sortByDateAsc);
 
     print(`Returned ${totalMessages} messages`);
     print(`Returned ${collectedDays.length} days`);
 
-    // We don't know if the first and last days are complete or not
-    const allDates = collectedDays.sort(sortByDateAsc);
-    const startDate = allDates[0];
-    const endDate = allDates[allDates.length - 1];
-    delete dailyStats[startDate];
-    delete dailyStats[endDate];
+    // Trim first day to ensure a complete starting day
+    delete dailyStats[collectedDays[0]];
+
+    // Trim the last day and days until stable
+    let trimDays = parseInt(DAYS_TO_STABLE_STATE, 10) + 1;
+    while (trimDays) {
+      delete dailyStats[collectedDays[collectedDays.length - trimDays]];
+      trimDays--;
+    }
+
+    const adjustedDays = Object.keys(dailyStats);
 
     // Add rows for dates where there were no posts
-    let datePointer = startDate;
-    while (datePointer !== endDate) {
-      if (!allDates.includes(datePointer)) {
+    let datePointer = adjustedDays[0];
+    while (datePointer !== adjustedDays[adjustedDays.length - 1]) {
+      if (!adjustedDays.includes(datePointer)) {
         dailyStats[datePointer] = { ...makeEmptyDay(), date: datePointer };
       }
       datePointer = getNextDate(datePointer);
