@@ -1,178 +1,23 @@
 import "dotenv/config";
 
-import slack from "@slack/bolt";
 import { stringify } from "csv/sync";
 
 import { readFileSync, writeFileSync } from "fs";
-import { parseArgs } from "util";
 import path from "path";
 
-////
-/// Constants
-//
+import cliArgs from "../src/cli-args.js";
+import { getConversations } from "../src/slack.js";
+import { fileNameBase, getFormattedDate, getNextDate, makeEmptyDay, reactionsInclude, sortByDateAsc } from "../src/utilities.js";
+import { dataPoints, excludedUsers, reactionMap } from "../src/constants.js";
 
 const {
   SLACK_CHANNEL_ID,
-  SLACK_BOT_TOKEN,
-  SLACK_SIGNING_SECRET,
-  FILE_OUTPUT_DIR,
-  DEBUG,
-  OLDEST_MESSAGE_TIMESTAMP,
   DAYS_TO_STABLE_STATE = 5,
 } = process.env;
 
-if (!SLACK_BOT_TOKEN || !SLACK_CHANNEL_ID || !SLACK_SIGNING_SECRET) {
-  console.log("❌ Missing required config");
-  process.exit(1);
-}
-
-const app = new slack.App({
-  token: SLACK_BOT_TOKEN,
-  signingSecret: SLACK_SIGNING_SECRET,
-});
-
-const fileNameBase =
-  new Date().toISOString().split(".")[0].replaceAll(":", "-") + "GMT-channel-analytics";
-
-const excludedUsers = [
-  "USLACKBOT", // Slackbot
-  "U040ZRHT2KH", // y0da
-];
-
-const dataPoints = [
-  {
-    key: "date",
-    header: "Date",
-    type: "string",
-  },
-  {
-    key: "total",
-    header: "Total posts",
-  },
-  {
-    key: "responses",
-    header: "Total responses",
-  },
-  {
-    key: "answered",
-    header: "Posts answered",
-  },
-  {
-    key: "abandoned",
-    header: "Posts abandoned",
-  },
-  {
-    key: "redirected",
-    header: "Posts redirected",
-  },
-  {
-    key: "unanswered",
-    header: "Posts unanswered",
-  },
-  {
-    key: "unmoderated",
-    header: "Posts unmoderated",
-  },
-  {
-    key: "joins",
-    header: "Channel joins",
-  },
-  {
-    key: "leaves",
-    header: "Channel leaves",
-  },
-  {
-    key: "reposts",
-    header: "Reposts",
-  },
-  {
-    key: "activeUsers",
-    header: "Active users",
-  },
-  {
-    key: "usersPosted",
-    header: "Users who posted",
-    type: "array",
-  },
-  {
-    key: "usersResponded",
-    header: "Users who responded",
-    type: "array",
-  },
-];
-
-const reactionMap = {
-  answered: "white_check_mark",
-  abandoned: "black_square_for_stop",
-  redirected: "redirect",
-  unanswered: "question",
-};
-
-////
-/// Functions
-//
-
-const getFormattedDate = (date) => {
-  const yyyy = date.getFullYear();
-  const mm = date.getMonth() + 1;
-  const dd = date.getDate();
-  return `${yyyy}-${padLeftZero(mm)}-${padLeftZero(dd)}`;
-};
-
-const getNextDate = (formattedDate) => {
-  const dateParts = formattedDate.split("-").map((number) => parseInt(number, 10));
-  const nextDate = new Date();
-  nextDate.setFullYear(dateParts[0]);
-  nextDate.setMonth(dateParts[1] - 1);
-  nextDate.setDate(dateParts[2] + 1);
-  return getFormattedDate(nextDate);
-};
-
-const padLeftZero = (string) => {
-  return `${string}`.length === 1 ? `0${string}` : `${string}`;
-};
-
-const reactionsInclude = (reactions, reaction) =>
-  reactions && reactions.some((r) => r.name === reaction);
-
-const sortByDateAsc = (a, b) => (a > b ? 1 : a < b ? -1 : 0);
-
-const makeEmptyDay = () => {
-  const emptyDay = {};
-  dataPoints.forEach((dp) => {
-    emptyDay[dp.key] = dp.type === "string" ? "" : dp.type === "array" ? [] : 0;
-  });
-  return emptyDay;
-};
-
-////
-/// Runtime
-//
-
 (async () => {
   try {
-    const {
-      outputDir = FILE_OUTPUT_DIR,
-      inputJson,
-      limit = 1000,
-      debug = DEBUG,
-    } = parseArgs({
-      strict: true,
-      options: {
-        inputJson: {
-          type: "string",
-        },
-        outputDir: {
-          type: "string",
-        },
-        limit: {
-          type: "string",
-        },
-        debug: {
-          type: "boolean",
-        },
-      },
-    }).values;
+    const { outputDir, inputJson, limit, debug } = cliArgs;
 
     const print = (text, type) => {
       if (!debug) {
@@ -196,19 +41,13 @@ const makeEmptyDay = () => {
       slackData = JSON.parse(slackData);
     } else {
       print(`Getting fresh data from the Slack API`);
-      slackData = await app.client.conversations.history({
-        channel: SLACK_CHANNEL_ID,
-        limit: parseInt(limit, 10),
-
-        // 2022-10-31, first day is cut before CSV is built
-        oldest: parseInt(OLDEST_MESSAGE_TIMESTAMP, 10),
-      });
+      slackData = await getConversations(parseInt(limit, 10));
     }
 
     if (!inputJson && outputDir) {
       print(`Writing JSON to ${outputDir}`);
       writeFileSync(
-        path.join(outputDir, `${fileNameBase}.json`),
+        path.join(outputDir, `${fileNameBase("channel-analytics")}.json`),
         JSON.stringify(slackData, null, 2)
       );
     }
@@ -311,15 +150,17 @@ const makeEmptyDay = () => {
 
     // Trim the last day and days until stable
     let trimDays = parseInt(DAYS_TO_STABLE_STATE, 10) + 1;
+    print(`Starting trim ...`);
     while (trimDays) {
       delete dailyStats[collectedDays[collectedDays.length - trimDays]];
       trimDays--;
     }
 
-    const adjustedDays = Object.keys(dailyStats);
+    const adjustedDays = Object.keys(dailyStats).sort(sortByDateAsc);
 
     // Add rows for dates where there were no posts
     let datePointer = adjustedDays[0];
+    print(`Starting date fill-out ...`);
     while (datePointer !== adjustedDays[adjustedDays.length - 1]) {
       if (!adjustedDays.includes(datePointer)) {
         dailyStats[datePointer] = { ...makeEmptyDay(), date: datePointer };
@@ -337,7 +178,7 @@ const makeEmptyDay = () => {
 
     const csvString = stringify(csvData, { columns: dataPoints, header: true });
     if (outputDir) {
-      const csvFilePath = path.join(outputDir, `${fileNameBase}.csv`);
+      const csvFilePath = path.join(outputDir, `${fileNameBase("channel-analytics")}.csv`);
       print(`Writing data to ${csvFilePath}`);
       writeFileSync(csvFilePath, csvString);
     } else {
