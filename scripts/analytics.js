@@ -8,7 +8,7 @@ import path from "path";
 import cliArgs from "../src/cli-args.js";
 import { getConversations } from "../src/slack.js";
 import { fileNameBase, getFormattedDate, getNextDate, makeEmptyDay, reactionsInclude, sortByDateAsc } from "../src/utilities.js";
-import { dataPoints, excludedUsers, reactionMap } from "../src/constants.js";
+import { analyticsDataPoints, excludedUsers, reactionMap } from "../src/constants.js";
 
 const {
   SLACK_CHANNEL_ID,
@@ -47,7 +47,7 @@ const {
     if (!inputJson && outputDir) {
       print(`Writing JSON to ${outputDir}`);
       writeFileSync(
-        path.join(outputDir, `${fileNameBase("channel-analytics")}.json`),
+        path.join(outputDir, `${fileNameBase("analytics")}.json`),
         JSON.stringify(slackData, null, 2)
       );
     }
@@ -176,9 +176,9 @@ const {
       }))
       .sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
 
-    const csvString = stringify(csvData, { columns: dataPoints, header: true });
+    const csvString = stringify(csvData, { columns: analyticsDataPoints, header: true });
     if (outputDir) {
-      const csvFilePath = path.join(outputDir, `${fileNameBase("channel-analytics")}.csv`);
+      const csvFilePath = path.join(outputDir, `${fileNameBase("analytics")}.csv`);
       print(`Writing data to ${csvFilePath}`);
       writeFileSync(csvFilePath, csvString);
     } else {

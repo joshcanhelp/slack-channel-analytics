@@ -16,7 +16,7 @@ const app = new slack.App({
   signingSecret: SLACK_SIGNING_SECRET,
 }).client.conversations;
 
-export const getConversations = async (limit = 0) => await app.history({
+export const getConversations = async (limit = 1000) => await app.history({
   channel: SLACK_CHANNEL_ID,
   limit,
 });

@@ -1,4 +1,4 @@
-import { dataPoints } from "./constants.js";
+import { analyticsDataPoints } from "./constants.js";
 
 export const padLeftZero = (string) => {
   return `${string}`.length === 1 ? `0${string}` : `${string}`;
@@ -9,7 +9,7 @@ export const reactionsInclude = (reactions, reaction) =>
 
 export const sortByDateAsc = (a, b) => (a > b ? 1 : a < b ? -1 : 0);
 
-export const fileNameBase = (name) => new Date().toISOString().split(".")[0].replaceAll(":", "-") + "GMT-" + name;
+export const fileNameBase = (name) => new Date().toISOString().split(".")[0].replaceAll(":", "-") + "GMT-channel-" + name;
 
 export const getFormattedDate = (date) => {
   const yyyy = date.getFullYear();
@@ -29,7 +29,7 @@ export const getNextDate = (formattedDate) => {
 
 export const makeEmptyDay = () => {
   const emptyDay = {};
-  dataPoints.forEach((dp) => {
+  analyticsDataPoints.forEach((dp) => {
     emptyDay[dp.key] = dp.type === "string" ? "" : dp.type === "array" ? [] : 0;
   });
   return emptyDay;

@@ -3,7 +3,7 @@ export const excludedUsers = [
   "U040ZRHT2KH", // y0da
 ];
 
-export const dataPoints = [
+export const analyticsDataPoints = [
   {
     key: "date",
     header: "Date",
@@ -63,6 +63,22 @@ export const dataPoints = [
     header: "Users who responded",
     type: "array",
   },
+];
+
+export const contentDataPoints = [
+  {
+    key: "date",
+    header: "Date",
+    type: "string",
+  },
+  {
+    key: "user",
+    header: "User posted",
+  },
+  {
+    key: "content",
+    header: "Message content",
+  }
 ];
 
 export const reactionMap = {
