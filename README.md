@@ -55,41 +55,41 @@ This script will look for specific emoji reactions on Slack messages to determin
 Running the script is as simple as:
 
 ```bash
-$ node src/analytics.js
+$ node scripts/analytics.js
 ```
 
 To see more output during processing, use:
 
 ```bash
-$ DEBUG=1 node src/analytics.js
+$ DEBUG=1 node scripts/analytics.js
 # or ... 
-$ node src/analytics.js --debug
+$ node scripts/analytics.js --debug
 ```
 
 To run the analytics on an existing Slack API JSON file to test changes to the processing without an HTTP request:
 
 ```bash
-$ node src/analytics.js --inputJson="/path/to/slack.json"
+$ node scripts/analytics.js --inputJson="/path/to/slack.json"
 ```
 
 To change the output directory for a single run:
 
 ```bash
-$ FILE_OUTPUT_DIR="/path/to/new/output/" node src/analytics.js
+$ FILE_OUTPUT_DIR="/path/to/new/output/" node scripts/analytics.js
 # or ... 
-$ node src/analytics.js --outputDir="/path/to/new/output/"
+$ node scripts/analytics.js --outputDir="/path/to/new/output/"
 ```
 
 To output the CSV to the console:
 
 ```bash
-$ FILE_OUTPUT_DIR="" node src/analytics.js
+$ FILE_OUTPUT_DIR="" node scripts/analytics.js
 # or ... 
-$ node src/analytics.js --outputDir=""
+$ node scripts/analytics.js --outputDir=""
 ```
 
 To limit the number of messages returned (default is 1000):
 
 ```bash
-$ node src/analytics.js --limit=100
+$ node scripts/analytics.js --limit=100
 ```
