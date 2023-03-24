@@ -169,11 +169,13 @@ const {
     }
 
     const csvData = Object.values(dailyStats)
-      .map((day) => ({
-        ...day,
-        usersPosted: day.usersPosted.join(" "),
-        usersResponded: day.usersResponded.join(" "),
-      }))
+      .map((day) => {
+        const dayTransformed = { ...day };
+        dayTransformed.answerPercent = !day.total ? 1 : Math.round(day.answered / day.total * 100) / 100;
+        dayTransformed.usersPosted = day.usersPosted.join(" ")
+        dayTransformed.usersResponded = day.usersResponded.join(" ")
+        return dayTransformed;
+      })
       .sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
 
     const csvString = stringify(csvData, { columns: analyticsDataPoints, header: true });

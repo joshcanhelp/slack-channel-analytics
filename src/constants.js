@@ -22,6 +22,10 @@ export const analyticsDataPoints = [
     header: "Posts answered",
   },
   {
+    key: "answerPercent",
+    header: "Percent answered",
+  },
+  {
     key: "abandoned",
     header: "Posts abandoned",
   },
