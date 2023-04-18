@@ -1,9 +1,6 @@
 import { parseArgs } from "util";
 
-const {
-  FILE_OUTPUT_DIR,
-  DEBUG,
-} = process.env;
+const { FILE_OUTPUT_DIR, DEBUG } = process.env;
 
 export default {
   ...{
@@ -23,9 +20,12 @@ export default {
       limit: {
         type: "string",
       },
+      latest: {
+        type: "string",
+      },
       debug: {
         type: "boolean",
       },
     },
-  }).values
+  }).values,
 };
